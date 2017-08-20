@@ -1,0 +1,60 @@
+library(rpart)
+
+titanic.all <- read.csv("titanic.csv", header=TRUE)
+str(titanic.all)
+
+#1.PARTITIONING THE DATA INTO TRAINING AND TESTING
+set.seed(106)   
+sample <- sample.int(n = nrow(titanic.all), size = floor(.70*nrow(titanic.all)), 
+			replace = F)
+train <- titanic.all[sample, ]
+test  <- titanic.all[-sample, ]
+str(train)
+
+#2.NO TRANSFORMATIONS NECESSARY
+
+#3.TRAINING A DECISION TREE MODEL
+fit <- rpart(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked,
+               data=train,
+               method="class")
+str(fit)
+
+#ADDING VISUALS
+plot(fit)
+text(fit)
+
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer)
+fancyRpartPlot(fit)
+
+
+#4. REPORTING THE IMPORTANCE OF EACH VARIABLE
+summary(fit) 
+#NOTE: THIS SHOWS NUMBERS RESCALED TO ADD TO 100 in summary
+#fit$variable.importance
+
+#5. TESTING THE MODEL ON THE TEST PARTITION
+predontest <- predict(fit, test, type = "class")
+ans1 <- data.frame(PassengerId = test$PassengerId, Survived = predontest)
+str(ans1)
+table(predontest)
+
+#6.REPORT THE OVERALL ACCURACY VIA CONFUSION MATRIX
+library(caret)
+table(predontest,test$Survived)
+confusionMatrix(predontest,test$Survived)
+#Basic Commonsense check: diagonal values are large, off diagonal values are comparitively low
+
+#7. NOW TO RUN ON PREDICT.CSV
+predcsv<- read.csv('predict.csv')
+predonpred <- predict(fit, predcsv, type = "class")
+ans2 <- data.frame(PassengerId = predcsv$PassengerId, Survived = predonpred)
+str(ans2)
+#write.csv(ans2, file = "submission.csv", row.names = FALSE)
+
+               
+
+
+
+
